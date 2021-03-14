@@ -5,51 +5,27 @@
 ####################################################
 
 TRAVEL_TIME = {
-    ('F', 'E'): 7.453320453415392,
-    ('F', 'D'): 6.170569410345761,
-    ('F', 'I'): 10.448429302986911,
-    ('F', 'G'): 6.187750187309644,
-    ('F', 'C'): 12.090422838563583,
-    ('F', 'H'): 11.539119418380032,
-    ('F', 'A'): 13.23865323724485,
-    ('F', 'J'): 14.209616157057711,
-    ('F', 'B'): 12.029520235766265,
-    ('E', 'D'): 4.594971038617467,
-    ('E', 'I'): 9.488857351897519,
-    ('E', 'G'): 4.661282508675182,
-    ('E', 'C'): 10.705763401441896,
-    ('E', 'H'): 10.12354365573923,
-    ('E', 'A'): 12.05863087182219,
-    ('E', 'J'): 12.857918364285274,
-    ('E', 'B'): 10.915808926216425,
-    ('D', 'I'): 8.773798408565863,
-    ('D', 'G'): 3.549820998388679,
-    ('D', 'C'): 9.084763991756446,
-    ('D', 'H'): 8.47244200438249,
-    ('D', 'A'): 10.768085646027655,
-    ('D', 'J'): 11.205467989446557,
-    ('D', 'B'): 9.811703475051996,
-    ('I', 'G'): 4.856711290250502,
-    ('I', 'C'): 10.303247633652786,
-    ('I', 'H'): 9.72873923304563,
-    ('I', 'A'): 11.752971702744057,
-    ('I', 'J'): 12.386140947772116,
-    ('I', 'B'): 10.715926552978804,
-    ('G', 'C'): 8.939922836985131,
-    ('G', 'H'): 8.325372714362043,
-    ('G', 'A'): 10.658709470483634,
-    ('G', 'J'): 11.05300320168352,
-    ('G', 'B'): 9.726036954632448,
-    ('C', 'H'): 14.85107596522508,
-    ('C', 'A'): 16.127909792272288,
-    ('C', 'J'): 17.54748278310382,
-    ('C', 'B'): 14.699070399680458,
-    ('H', 'A'): 15.723529687188293,
-    ('H', 'J'): 17.10791004081554,
-    ('H', 'B'): 14.306778662449995,
-    ('A', 'J'): 16.949188359233272,
-    ('A', 'B'): 14.239542023142393,
-    ('J', 'B'): 16.6207970728817,
+    ('Fort Washington', 'Choptank River'): 2.05,
+    ('Fort Washington', 'Hooper Strait'): 1.9333333333333333,
+    ('Fort Washington', 'Point Lookout'): 1.8333333333333335,
+    ('Fort Washington', 'Sandy Point'): 1.1,
+    ('Fort Washington', 'Cove Point'): 1.4666666666666668,
+    ('Fort Washington', 'Drum Point'): 1.3833333333333333,
+    ('Choptank River', 'Hooper Strait'): 0.65,
+    ('Choptank River', 'Point Lookout'): 3.066666666666667,
+    ('Choptank River', 'Sandy Point'): 1.1,
+    ('Choptank River', 'Drum Point'): 2.3833333333333333,
+    ('Choptank River', 'Cove Point'): 2.3833333333333333,
+    ('Hooper Strait', 'Point Lookout'): 2.966666666666667,
+    ('Hooper Strait', 'Sandy Point'): 1.0,
+    ('Hooper Strait', 'Drum Point'): 2.283333333333333,
+    ('Hooper Strait', 'Cove Point'): 2.283333333333333,
+    ('Point Lookout', 'Sandy Point'): 2.1166666666666667,
+    ('Point Lookout', 'Drum Point'): 0.6833333333333333,
+    ('Point Lookout', 'Cove Point'): 0.8833333333333333,
+    ('Sandy Point', 'Drum Point'): 1.4333333333333333,
+    ('Sandy Point', 'Cove Point'): 1.45,
+    ('Drum Point', 'Cove Point'): 0.25,
 }
 
 L = list(set([item for k in TRAVEL_TIME.keys() for item in k]))
@@ -152,16 +128,17 @@ def fastest_tour(start_light, L):
             # This should recursively compute all possible tours through L which begin at start_point
 
             L_minus = list_minus(L, arrival_light)
-            if L_minus not in travel_time:
-                tour, time = fastest_tour(arrival_light, L_minus)
-                travelHistory[tour] = time
-            else:
-                tour = L_minus
-                time = travelHistory[L_minus]
 
-            if time + travel_time(start_light, arrival_light) < best_time + travel_time(start_light, best_arrival):
+            if (arrival_light, tuple(L_minus)) not in travelHistory:
+                tour, time = fastest_tour(arrival_light, L_minus)
+                travelHistory[(arrival_light, tuple(L_minus))] = time, tour
+            else:
+                tour = list(travelHistory[(arrival_light, tuple(L_minus))][1])
+                time = travelHistory[(arrival_light, tuple(L_minus))][0]
+
+            if (time + travel_time(start_light, arrival_light)) < (best_time + travel_time(start_light, best_arrival)):
                 best_time = time
-                best_tour = tour
+                best_tour = tour[:]
                 best_arrival = arrival_light
 
         best_tour.insert(0, start_light)
@@ -182,9 +159,9 @@ def get_fastest_tour(L):
     bestTour = []
     bestTime = inf
 
-    travelHistory = dict()
-
     global travelHistory
+
+    travelHistory = {}
 
     if len(L) <= 1:
         return L, 0
