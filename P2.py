@@ -5,43 +5,33 @@
 ####################################################
 
 TRAVEL_TIME = {
-    ('Fort Washington', 'Choptank River'): 2.05,
-    ('Fort Washington', 'Hooper Strait'): 1.9333333333333333,
-    ('Fort Washington', 'Point Lookout'): 1.8333333333333335,
-    ('Fort Washington', 'Sandy Point'): 1.1,
-    ('Fort Washington', 'Cove Point'): 1.4666666666666668,
-    ('Fort Washington', 'Drum Point'): 1.3833333333333333,
-    ('Choptank River', 'Hooper Strait'): 0.65,
-    ('Choptank River', 'Point Lookout'): 3.066666666666667,
-    ('Choptank River', 'Sandy Point'): 1.1,
-    ('Choptank River', 'Drum Point'): 2.3833333333333333,
-    ('Choptank River', 'Cove Point'): 2.3833333333333333,
-    ('Hooper Strait', 'Point Lookout'): 2.966666666666667,
-    ('Hooper Strait', 'Sandy Point'): 1.0,
-    ('Hooper Strait', 'Drum Point'): 2.283333333333333,
-    ('Hooper Strait', 'Cove Point'): 2.283333333333333,
-    ('Point Lookout', 'Sandy Point'): 2.1166666666666667,
-    ('Point Lookout', 'Drum Point'): 0.6833333333333333,
-    ('Point Lookout', 'Cove Point'): 0.8833333333333333,
-    ('Sandy Point', 'Drum Point'): 1.4333333333333333,
-    ('Sandy Point', 'Cove Point'): 1.45,
-    ('Drum Point', 'Cove Point'): 0.25,
+    ('D', 'E'): 9.8874546134365,
+    ('D', 'B'): 8.650955785569098,
+    ('D', 'C'): 4.527990409960845,
+    ('D', 'A'): 9.817667809230786,
+    ('E', 'B'): 10.931854306263975,
+    ('E', 'C'): 7.255251488484818,
+    ('E', 'A'): 12.917982527478712,
+    ('B', 'C'): 4.113565483054365,
+    ('B', 'A'): 9.560863383439097,
+    ('C', 'A'): 7.854345573910511,
 }
 
 L = list(set([item for k in TRAVEL_TIME.keys() for item in k]))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+####################################################
 # Utility functions that you can use if you wish
 
-
+'''Returns a list of L that does not have x in it'''
 def list_minus(L, x):
-    # Returns a list of L that does not have x in it
     return list(set(L) - {x})
 
 
+'''Looks up x and y in TRAVEL_TIME in a way that order does not matter, returns a time'''
 def travel_time(key1, key2):
-    # Looks up x and y in TRAVEL_TIME in a way that order does not matter, returns a time
+
     global TRAVEL_TIME
     if (key1, key2) in TRAVEL_TIME:
         tm = TRAVEL_TIME[(key1, key2)]
@@ -50,10 +40,11 @@ def travel_time(key1, key2):
     return tm
 
 
+'''
+    Generates a random list of n lighthouses
+    returns a dictionary in the same format as TRAVEL_TIME and a list of lighthouses (new_L)
+'''
 def random_lighthouses(n):
-    # Generates a random list of n lighthouses
-    # returns a dictionary in the same format as TRAVEL_TIME and a list of lighthouses (new_L)
-
     from string import ascii_uppercase
     from random import uniform
     from itertools import combinations  # students aren't allowed to use itertools for this assignment
@@ -63,7 +54,7 @@ def random_lighthouses(n):
     new_L = []
     letters = list(ascii_uppercase)
 
-    for i in range(1, n):
+    for i in range(1, n + 1):
         x = uniform(1, 100)
         y = uniform(1, 100)
         pt_name = letters[i - 1]
@@ -77,14 +68,15 @@ def random_lighthouses(n):
         dist = sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
         name = (i[0][0], i[1][0])
         new_TRAVEL_TIME[name] = dist
-    return new_TRAVEL_TIME, new_L
+    return new_TRAVEL_TIME
 
 
+'''Gets a list of the names of the lighthouses in dictionary L'''
 def lighthouse_names(TL):
-    # Gets a list of the names of the lighthouses in dictionary L
     return list(set([item for k in TL.keys() for item in k]))
 
 
+'''Counts the number of times a method gets called'''
 def call_counter(f):
     def wrapped(*args, **kwargs):  # deal with any/all arguments
         wrapped.calls += 1
@@ -99,9 +91,6 @@ def call_counter(f):
 ####################################################
 # MY RECURSIVE FUNCTION
 
-
-from math import inf
-
 '''
  Accepts start_point (starting lighthouse name), list L (all lighthouses)
  Returns best_tour (sequential list of lighthouses) and best_time (float value of best time in hours)
@@ -109,38 +98,34 @@ from math import inf
      start_light is a string, best_tour and L are lists of strings, and best_time is a float)
 '''
 
-
+@call_counter
 def fastest_tour(start_light, L):
     best_tour = []  # used to store the running best overall tour that starts at start_light
-    best_time = inf  # used to store the time for the best_tour sequence
+    best_time = -1  # used to store the time for the best_tour sequence
 
-    # BASE CASE
+    # BASE CASE: Having only one target and one L means that we only have one best tour
     if len(L) == 1:
-        # Add code to calculate the base case here
         best_time = travel_time(start_light, L[0])
         best_tour = [start_light, L[0]]
         return best_tour, best_time
 
-    # RECURSIVE CASE
+    # RECURSIVE : We have multiple paths we can still take
     else:
-        best_arrival = L[0]
-        for arrival_light in L:
-            # This should recursively compute all possible tours through L which begin at start_point
+        best_arrival = None  # Stores which lighthouse destination is better
 
-            L_minus = list_minus(L, arrival_light)
+        for arrival_light in L:  # Iterate to each destination and get their fastest tour
 
-            if (arrival_light, tuple(L_minus)) not in travelHistory:
-                tour, time = fastest_tour(arrival_light, L_minus)
-                travelHistory[(arrival_light, tuple(L_minus))] = time, tour
-            else:
-                tour = list(travelHistory[(arrival_light, tuple(L_minus))][1])
-                time = travelHistory[(arrival_light, tuple(L_minus))][0]
+            L_minus = list_minus(L, arrival_light)  # Remove destination from remaining lighthouses
+            # Calculate best tour for the destination lighthouse and the remaining ones
+            tour, time = fastest_tour(arrival_light, L_minus)
 
-            if (time + travel_time(start_light, arrival_light)) < (best_time + travel_time(start_light, best_arrival)):
+            # Check if the resulting tour is better than ones previously found
+            if best_time < 0 or (time + travel_time(start_light, arrival_light)) < (best_time + travel_time(start_light, best_arrival)):
                 best_time = time
                 best_tour = tour[:]
                 best_arrival = arrival_light
 
+        # Update the best time and tour to give back a result containing the starting lighthouse
         best_tour.insert(0, start_light)
         best_time += travel_time(start_light, best_arrival)
 
@@ -154,32 +139,129 @@ def fastest_tour(start_light, L):
 # Suggested structure to kick off your calculations
 # You will need to adjust this code to match your implementation
 
+@call_counter
+def get_fastest_tour():
+    global TRAVEL_TIME
 
-def get_fastest_tour(L):
-    bestTour = []
-    bestTime = inf
+    L = lighthouse_names(TRAVEL_TIME)  # Get a list of lighthouses from lighthouse distance map
 
-    global travelHistory
+    bestTour = []  # used to store the running best overall tour that starts at start_light
+    bestTime = -1  # used to store the time for the best_tour sequence
 
-    travelHistory = {}
-
+    # If the number of lighthouses is less than 1 then there isn't a tour since there is no travel done
     if len(L) <= 1:
         return L, 0
-
+    # Check times when you start at every lighthouse that exists
     for start_light in L:
         L_minus = list_minus(L, start_light)
         tour, time = fastest_tour(start_light, L_minus)
-        if time < bestTime:
+        # See which full tour was the fastest one
+        if bestTime < 0 or time < bestTime:
             bestTour = tour
             bestTime = time
 
     return bestTour, bestTime
 
 
-best_tour, best_time = get_fastest_tour(L)
+best_tour, best_time = get_fastest_tour()
 
 print("The best tour is: ", ', '.join(best_tour))
 print("The best time is: ", best_time)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+####################################################
+# MY RECURSIVE FUNCTION
+
+'''
+ Accepts start_point (starting lighthouse name), list L (all lighthouses)
+ Returns best_tour (sequential list of lighthouses) and best_time (float value of best time in hours)
+ You must keep the signatures the same (accepts start_light, L and returns best_tour, best_time;
+     start_light is a string, best_tour and L are lists of strings, and best_time is a float)
+'''
+
+@call_counter
+def fastest_tour_faster(start_light, L):
+    best_tour = []  # used to store the running best overall tour that starts at start_light
+    best_time = -1  # used to store the time for the best_tour sequence
+
+    # BASE CASE: Having only one target and one L means that we only have one best tour
+    if len(L) == 1:
+        best_time = travel_time(start_light, L[0])
+        best_tour = [start_light, L[0]]
+        return best_tour, best_time
+
+    # RECURSIVE : We have multiple paths we can still take
+    else:
+        best_arrival = None  # Stores which lighthouse destination is better
+
+        for arrival_light in L:  # Iterate to each destination and get their fastest tour
+
+            L_minus = list_minus(L, arrival_light)  # Remove destination from remaining lighthouses
+            # If we have not seen this destination and sublist pair, generate it then store the result
+            if (arrival_light, tuple(L_minus)) not in travelHistory:
+                tour, time = fastest_tour_faster(arrival_light, L_minus)
+                travelHistory[(arrival_light, tuple(L_minus))] = time, tour
+            # We have already a result for this destination and sublist pair so we use it.
+            else:
+                tour = list(travelHistory[(arrival_light, tuple(L_minus))][1])
+                time = travelHistory[(arrival_light, tuple(L_minus))][0]
+            # Check if the resulting tour is better than ones previously found
+            if best_time < 0 or (time + travel_time(start_light, arrival_light)) < (best_time + travel_time(start_light, best_arrival)):
+                best_time = time
+                best_tour = tour[:]
+                best_arrival = arrival_light
+
+        # Update the best time and tour to give back a result containing the starting lighthouse
+        best_tour.insert(0, start_light)
+        best_time += travel_time(start_light, best_arrival)
+
+        return best_tour, best_time
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+####################################################
+# MY MAIN
+
+# Suggested structure to kick off your calculations
+# You will need to adjust this code to match your implementation
+
+@call_counter
+def get_fastest_tour_faster():
+
+    global TRAVEL_TIME
+
+    L = lighthouse_names(TRAVEL_TIME)  # Get a list of lighthouses from lighthouse distance map
+
+    bestTour = []  # used to store the running best overall tour that starts at start_light
+    bestTime = -1  # used to store the time for the best_tour sequence
+
+    # Set up a global log to remember recursive results
+    global travelHistory
+
+    # Reset history
+    travelHistory = {}
+
+    # If the number of lighthouses is less than 1 then there isn't a tour since there is no travel done
+    if len(L) <= 1:
+        return L, 0
+    # Check times when you start at every lighthouse that exists
+    for start_light in L:
+        L_minus = list_minus(L, start_light)
+        tour, time = fastest_tour_faster(start_light, L_minus)
+        # See which full tour was the fastest one
+        if bestTime < 0 or time < bestTime:
+            bestTour = tour
+            bestTime = time
+
+    return bestTour, bestTime
+
+
+best_tour, best_time = get_fastest_tour_faster()
+
+print("The best tour is: ", ', '.join(best_tour))
+print("The best time is: ", best_time)
+
 
 '''
 # INSTRUCTOR-PROVIDED TEST DATA
@@ -314,3 +396,42 @@ TRAVEL_TIME = {
 # route 235 and heading to Ft. Washington that way.  This is what makes TSP
 # such an interesting problem.
 '''
+
+import random
+import math
+
+
+def fact(n):
+    if n <= 1:
+        return 1
+    else:
+        return n*fact(n-1)
+
+# Data creation
+x_number_of_destinations = range(3, 10)
+y1_number_of_calls = list()
+y2_assymtotic_time = list()
+for number_of_destinations in x_number_of_destinations:
+    TRAVEL_TIME = random_lighthouses(number_of_destinations)
+    best_tour, best_time = get_fastest_tour()
+    y1_number_of_calls.append(get_fastest_tour.calls + fastest_tour.calls)
+    y2_assymtotic_time.append(fact(number_of_destinations*number_of_destinations))
+
+
+
+# %matplotlib inline
+import matplotlib.pyplot as plt
+
+# plt.rcParams['figure.figsize'] = [10,5]
+plt.figure()
+plt.title("Algorithm Performance", size="xx-large")
+plt.ylabel("Total Function Calls", size="x-large")
+plt.xlabel("Total of Lighthouses", size="x-large")
+# plt.ylim([0,30]) # y-axis scale
+
+# The "b^-" has meaning - "b" means blue, "^" means triangles (try *, s, o),
+# "-" means draw a line
+plt.plot(x_number_of_destinations, y1_number_of_calls, "b^-", markersize=10, linewidth=2, label="exec steps")
+plt.plot(x_number_of_destinations, y2_assymtotic_time, "r*-", markersize=10, linewidth=2, label="exec steps")
+plt.tick_params(axis="both", which="major", labelsize=14)
+plt.legend(loc=(0.25,0.75), scatterpoints=1)
