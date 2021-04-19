@@ -102,7 +102,11 @@ def random_lighthouses(n):
     for i in range(1, n + 1):
         x = uniform(1, 100)
         y = uniform(1, 100)
-        pt_name = letters[i - 1]
+        if i - 1 < len(ascii_uppercase):
+            pt_name = letters[i - 1]
+        else:
+            pt_name = letters[(i - 1) % len(ascii_uppercase)] + str(i-1)
+
         pt = (pt_name, (x, y))
         new_L.append(pt)
 
@@ -186,9 +190,12 @@ def fastest_tour_faster(start_light, L):
 ####################################################
 # MY MAIN
 
-# Suggested structure to kick off your calculations
-# You will need to adjust this code to match your implementation
-
+'''
+ Accepts list L (all lighthouses)
+ Returns best_tour (sequential list of lighthouses) and best_time (float value of best time in hours)
+ You must keep the signatures the same (accepts start_light, L and returns best_tour, best_time;
+     start_light is a string, best_tour and L are lists of strings, and best_time is a float)
+'''
 @call_counter
 def get_fastest_tour_faster(L):
 
@@ -226,37 +233,49 @@ print("The best time is: ", best_time)
 
 ####################################################
 # MY NEAREtST NEIGHBOR AND MONTE CARLO FUNCTIONS
+'''
+ Accepts list L (all lighthouses)
+ Returns best_tour (sequential list of lighthouses) and best_time (float value of best time in hours)
+ You must keep the signatures the same (accepts start_light, L and returns best_tour, best_time;
+     start_light is a string, best_tour and L are lists of strings, and best_time is a float)
+'''
 @call_counter
 def nearest_neighbor(L):
-    if len(L) <= 1:
+    if len(L) <= 1:  # If the number of lighthouses is less than 1 exit tour.
         return 0, L
     fastest_time = -1
     fastest_tour = []
-    for starting in L:
+    for starting in L:  # Start a tour from each light house
         time, tour = get_greedy_path(starting, list_minus(L, starting))
-        if fastest_time == -1 or fastest_time > time:
+        if fastest_time == -1 or fastest_time > time:  # Select the fastest tour as the final answer.
             fastest_time = time
             fastest_tour = tour
 
     return fastest_time, fastest_tour
 
+'''
+ Accepts start_point (starting lighthouse name), list L (all lighthouses)
+ Returns best_tour (sequential list of lighthouses) and best_time (float value of best time in hours)
+ You must keep the signatures the same (accepts start_light, L and returns best_tour, best_time;
+     start_light is a string, best_tour and L are lists of strings, and best_time is a float)
+'''
 @call_counter
-def get_greedy_path(current, L):
-    if len(L) <= 0:
+def get_greedy_path(start_point, L):
+    if len(L) <= 0:  # If there are no lighthouses left to visit, exit
         return 0, L
-    if len(L) == 1:
-        return travel_time(current, L[0]), [current, L[0]]
-    shortest = None
-    for next in L:
+    if len(L) == 1:  # If there is only one lighthouse left return its tour
+        return travel_time(start_point, L[0]), [start_point, L[0]]
+    shortest = None  # Store the closest light house
+    for next in L:  # Check every light house to see which is closest to the current one
         if shortest is None:
-            shortest = next
-        elif travel_time(current, shortest) > travel_time(current, next):
-            shortest = next
+            shortest = next  # Assume the first lighthouse seen to be the closest
+        elif travel_time(start_point, shortest) > travel_time(start_point, next):
+            shortest = next  # If the next lighthouse is closer than the shortest make next the shortest.
 
-    time, tour = get_greedy_path(shortest, list_minus(L, shortest))
+    time, tour = get_greedy_path(shortest, list_minus(L, shortest))  # Search for the next closest lighthouse.
 
-    tour.insert(0, current)
-    time = time + travel_time(current, shortest)
+    tour.insert(0, start_point)  # Add the current lighthouse to tour
+    time = time + travel_time(start_point, shortest)
 
     return time, tour
 
@@ -266,51 +285,156 @@ best_time, best_tour = nearest_neighbor(LIGHTS)
 print("The best tour is: ", ', '.join(best_tour))
 print("The best time is: ", best_time)
 
-
-def monte_carlo(M, n):
-    """ Accepts an integer M, for the number of iterations of the test to execute, and n, an integer value"""
-    """ for the number of lighthouses in each test run.  Returns an M-length list of the percent difference between"""
-    """ the optimal and approximate solution for each random iteration"""
+''' 
+Accepts an integer M, for the number of iterations of the test to execute, and n, an integer value
+for the number of lighthouses in each test run.  Returns an M-length list of the percent difference between
+the optimal and approximate solution for each random iteration
+'''
+def monte_carlo(m, n):
     global TRAVEL_TIME
     counter = 0
     result = []
-    while counter < M:
-        TRAVEL_TIME = random_lighthouses(n)
-        LIGHTS = lighthouse_names(TRAVEL_TIME)
+    # Do calculations M times
+    while counter < m:
+        TRAVEL_TIME = random_lighthouses(n)  # Create a random set of lighthouses
+        LIGHTS = lighthouse_names(TRAVEL_TIME) # Get lighthouse names
 
-        get_fastest_tour_faster.calls = 0
-        fastest_tour_faster.calls = 0
-        get_fastest_tour_faster(LIGHTS)
-        bruteforce_time = get_fastest_tour_faster.calls + fastest_tour_faster.calls
+        bruteforce_time, tour = get_fastest_tour_faster(LIGHTS)
 
-        nearest_neighbor.calls = 0
-        get_greedy_path.calls = 0
-        nearest_neighbor(LIGHTS)
-        nearneigh_time = nearest_neighbor.calls + get_greedy_path.calls
+        nearneigh_time, tour = nearest_neighbor(LIGHTS)
 
         diffpct = abs(nearneigh_time - bruteforce_time) / bruteforce_time
         result.append(diffpct)
+        counter = counter + 1
     return result
-m = 10
-n = 5
-x_number_of_runs = range(1, m+1)
-y_monte_carlo = monte_carlo(m, n)
 
-# %matplotlib inline
-import matplotlib.pyplot as plt
+# def sort_converter(travelLog):
+#     log = travelLog.items()
+#     log = merge_sort(log)
+#     for item in log:
+#         travelLog[item[0]] = item[1]
+#     return travelLog
+#
+# ''' A merge sort that sorts points in ascending order using the coordiantes '''
+# @call_counter
+# def merge_sort(log):
+#     # Base case 1: There is one or no elements in the given list
+#     if len(log) <= 1:
+#         return log
+#
+#     # Recursive case 1: Divide list into two lists cut by the middle
+#
+#     left_sub_logs = merge_sort(log[0:len(log)//2])
+#     right_sub_logs = merge_sort(log[len(log)//2:])
+#
+#     # Merge the returning sub lists
+#     sorted_points = merge(left_sub_logs, right_sub_logs)
+#     return sorted_points
+#
+#
+# ''' Merge sort helper to merge the given arrays '''
+# @call_counter
+# def merge(left_sub_logs, right_sub_logs):
+#
+#     merged_log = list()
+#
+#     # Choose the smallest point from the leading elements and add it to the merge list
+#     while (len(left_sub_logs) > 0) and (len(right_sub_logs) > 0):
+#         if left_sub_logs[0][1] < right_sub_logs[0][1]:
+#             merged_log.append(right_sub_logs.pop(0))
+#         else:
+#             merged_log.append(right_sub_logs.pop(0))
+#
+#
+#     # If there are points left on left add them to the sorted list
+#     while len(left_sub_logs) > 0:
+#         merged_log.append(right_sub_logs.pop(0))
+#
+#     # If there are points right on left add them to the sorted list
+#     while len(left_sub_logs) > 0:
+#         merged_log.append(right_sub_logs.pop(0))
+#
+#     return merged_log
+#
+# def multi_fragment(L):
+#     global TRAVEL_TIME
+#     travelLog = TRAVEL_TIME.copy()
+#     travelLog = sort_converter(travelLog)
+#     time = 0
+#     tours = []
+#     for path in travelLog:
+#         for tour in tours:
+#             if (path[0][0] == tour[0] or path[0][0] == tour[len(tour)-1]) and (path[0][1] == tour[0] or path[0][1] == tour[len(tour)-1]) and (len(travelLog) != 1 or len(tour) < len(L)):
+#                 continue
+#             elif path[0][0] in tour and (path[0][0] != tour[0] and path[0][0] != tour[len(tour)-1]) or path[0][1] in tour and (path[0][1] != tour[0] and path[0][1] != tour[len(tour)-1]):
+#                 continue
+#             elif (path[0][0] == tour[0] or path[0][0] == tour[len(tour)-1]) and (path[0][1] == tour[0] or path[0][1] == tour[len(tour)-1]) and (len(travelLog) == 1 and len(tour) == len(L)):
+#                 return time, tour
+#             elif path[0][0] == tour[0]:
+#                 tour.insert(0, path[0][1])
+#                 time = time + tour[1]
+#                 break
+#             elif path[0][1] == tour[0]:
+#                 tour.insert(0, path[0][0])
+#                 time = time + tour[1]
+#                 break
+#             elif path[0][0] == tour[len(tour)-1]:
+#                 tour.append(path[0][1])
+#                 time = time + tour[1]
+#                 break
+#             elif path[0][1] == tour[len(tour)-1]:
+#                 tour.append(path[0][0])
+#                 time = time + tour[1]
+#                 break
+#         tours.append(path[0])
 
-# plt.rcParams['figure.figsize'] = [10,5]
-plt.figure()
-plt.title("Algorithm Performance", size="xx-large")
-plt.ylabel("Total Function Calls", size="x-large")
-plt.xlabel("Total of Lighthouses", size="x-large")
-# plt.ylim([0,30]) # y-axis scale
+y = monte_carlo(50, 5)
 
-# The "b^-" has meaning - "b" means blue, "^" means triangles (try *, s, o),
-# "-" means draw a line
-plt.plot(x_number_of_runs, y_monte_carlo, "b^-", markersize=10, linewidth=2, label="exec steps")
-plt.tick_params(axis="both", which="major", labelsize=14)
-plt.legend(loc=(0.25,0.75), scatterpoints=1)
+for val in y:
+    print(val)
+
+
+
+
+
+
+
+
+# Require: Sorted set of all edges of the problem E.
+# Ensure: A tour T.
+# 1: for each e in E do
+# 2: if (e is closing T and size(T) < n) or (e has a city already connected to
+# two others) then
+# 3: go to the next edge
+# 4: end if
+# 5: if e is closing T and size(T) = n then
+# 6: add e to T
+# 7: return T
+# 8: end if
+# 9: add e to T
+# 10: end for
+# 11: return T
+
+# m = 10
+# n = 5
+# x_number_of_runs = range(1, m+1)
+# y_monte_carlo = monte_carlo(m, n)
+#
+# # %matplotlib inline
+# import matplotlib.pyplot as plt
+#
+# # plt.rcParams['figure.figsize'] = [10,5]
+# plt.figure()
+# plt.title("Algorithm Performance", size="xx-large")
+# plt.ylabel("Total Function Calls", size="x-large")
+# plt.xlabel("Total of Lighthouses", size="x-large")
+# # plt.ylim([0,30]) # y-axis scale
+#
+# # The "b^-" has meaning - "b" means blue, "^" means triangles (try *, s, o),
+# # "-" means draw a line
+# plt.plot(x_number_of_runs, y_monte_carlo, "b^-", markersize=10, linewidth=2, label="exec steps")
+# plt.tick_params(axis="both", which="major", labelsize=14)
+# plt.legend(loc=(0.25,0.75), scatterpoints=1)
 
 '''
 # INSTRUCTOR-PROVIDED TEST DATA
